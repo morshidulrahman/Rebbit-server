@@ -73,6 +73,13 @@ app.get("/queries", async (req, res) => {
   res.json(result);
 });
 
+app.get("/myqueries/:email", async (req, res) => {
+  const email = req.params.email;
+  const query = { "userInfo.email": email };
+  const result = await QueriesCollection.find(query).toArray();
+  res.json(result);
+});
+
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
