@@ -39,6 +39,7 @@ dbConnect();
 
 const Database = client.db("rebbitDb");
 const QueriesCollection = Database.collection("queries");
+const recommendationCollection = Database.collection("recommendations");
 
 app.post("/jwt", async (req, res) => {
   const user = req.body;
@@ -80,6 +81,36 @@ app.get("/queries/:id", async (req, res) => {
   res.json(result);
 });
 
+app.delete("/queries/:id", async (req, res) => {
+  const id = req.params.id;
+  const query = { _id: new ObjectId(id) };
+  const result = await QueriesCollection.deleteOne(query);
+  res.json(result);
+});
+
+app.put("/queries/:id", async (req, res) => {
+  const id = req.params.id;
+  const {
+    productName,
+    brandName,
+    productImage,
+    queryTitle,
+    alternationReason,
+  } = req.body;
+  const query = { _id: new ObjectId(id) };
+  const updateDoc = {
+    $set: {
+      productName,
+      brandName,
+      productImage,
+      queryTitle,
+      alternationReason,
+    },
+  };
+  const result = await QueriesCollection.updateOne(query, updateDoc);
+  res.send(result);
+});
+
 app.get("/myqueries/:email", async (req, res) => {
   const email = req.params.email;
   const query = { "userInfo.email": email };
@@ -89,6 +120,19 @@ app.get("/myqueries/:email", async (req, res) => {
 app.post("/addqueries", async (req, res) => {
   const product = req.body;
   const result = await QueriesCollection.insertOne(product);
+  res.json(result);
+});
+
+app.post("/recommendations", async (req, res) => {
+  const recommendation = req.body;
+  const result = await recommendationCollection.insertOne(recommendation);
+  res.json(result);
+});
+
+app.get("/recommendations/:id", async (req, res) => {
+  const id = req.params.id;
+  const query = { queryId: id };
+  const result = await recommendationCollection.find(query).toArray();
   res.json(result);
 });
 
