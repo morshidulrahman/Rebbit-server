@@ -4,7 +4,7 @@ const cors = require("cors");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const PORT = process.env.PORT || 5000;
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const cookieParser = require("cookie-parser");
 
 app.use(express.json());
@@ -70,6 +70,13 @@ app.get("/logout", (req, res) => {
 
 app.get("/queries", async (req, res) => {
   const result = await QueriesCollection.find().toArray();
+  res.json(result);
+});
+
+app.get("/queries/:id", async (req, res) => {
+  const id = req.params.id;
+  const query = { _id: new ObjectId(id) };
+  const result = await QueriesCollection.findOne(query);
   res.json(result);
 });
 
