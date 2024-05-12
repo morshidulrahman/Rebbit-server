@@ -79,6 +79,11 @@ app.get("/myqueries/:email", async (req, res) => {
   const result = await QueriesCollection.find(query).toArray();
   res.json(result);
 });
+app.post("/addqueries", async (req, res) => {
+  const product = req.body;
+  const result = await QueriesCollection.insertOne(product);
+  res.json(result);
+});
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
