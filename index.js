@@ -150,6 +150,13 @@ app.get("/myrecommendations/:email", async (req, res) => {
   res.send(result);
 });
 
+app.get("/recommendationme/:email", async (req, res) => {
+  const email = req.params.email;
+  const query = { UserEmail: email };
+  const result = await recommendationCollection.find(query).toArray();
+  res.send(result);
+});
+
 app.get("/recommendations/:id", async (req, res) => {
   const id = req.params.id;
   const query = { queryId: id };
