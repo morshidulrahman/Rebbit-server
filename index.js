@@ -145,9 +145,9 @@ app.get("/recommendations", async (req, res) => {
 
 app.get("/myrecommendations/:email", async (req, res) => {
   const email = req.params.email;
-  const query = { "userInfo.email": email };
+  const query = { recommenderEmail: email };
   const result = await recommendationCollection.find(query).toArray();
-  res.json(result);
+  res.send(result);
 });
 
 app.get("/recommendations/:id", async (req, res) => {
@@ -156,11 +156,22 @@ app.get("/recommendations/:id", async (req, res) => {
   const result = await recommendationCollection.find(query).toArray();
   res.json(result);
 });
+
 app.delete("/recommendations/:id", async (req, res) => {
   const id = req.params.id;
-  const query = { queryId: id };
+  const query = { _id: new ObjectId(id) };
   const result = await recommendationCollection.deleteOne(query);
   res.json(result);
+});
+
+app.patch("/queiresdec/:id", async (req, res) => {
+  const id = req.params.id;
+  const query = { _id: new ObjectId(id) };
+  const updateDoc = {
+    $inc: { "userInfo.recommendationCount": -1 },
+  };
+  const result = await QueriesCollection.updateOne(query, updateDoc);
+  res.send(result);
 });
 
 app.get("/", (req, res) => {
