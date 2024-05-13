@@ -143,10 +143,23 @@ app.get("/recommendations", async (req, res) => {
   res.json(result);
 });
 
+app.get("/myrecommendations/:email", async (req, res) => {
+  const email = req.params.email;
+  const query = { "userInfo.email": email };
+  const result = await recommendationCollection.find(query).toArray();
+  res.json(result);
+});
+
 app.get("/recommendations/:id", async (req, res) => {
   const id = req.params.id;
   const query = { queryId: id };
   const result = await recommendationCollection.find(query).toArray();
+  res.json(result);
+});
+app.delete("/recommendations/:id", async (req, res) => {
+  const id = req.params.id;
+  const query = { queryId: id };
+  const result = await recommendationCollection.deleteOne(query);
   res.json(result);
 });
 
