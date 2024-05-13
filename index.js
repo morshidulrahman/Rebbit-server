@@ -138,6 +138,10 @@ app.post("/recommendations", async (req, res) => {
   const result = await recommendationCollection.insertOne(recommendation);
   res.json(result);
 });
+app.get("/recommendations", async (req, res) => {
+  const result = await recommendationCollection.find().toArray();
+  res.json(result);
+});
 
 app.get("/recommendations/:id", async (req, res) => {
   const id = req.params.id;
