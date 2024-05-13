@@ -56,6 +56,23 @@ app.post("/jwt", async (req, res) => {
     });
 });
 
+const verifytoken = (req, res, next) => {
+  const token = req.cookies.token;
+  if (!token) {
+    return res.status(401).send({ message: "unauthorized" });
+  }
+  if (token) {
+    jwt.verify(token, process.env.jwt_web_token, (err, decoded) => {
+      if (err) {
+        return res.status(401).send({ message: "unauthorized" });
+      }
+
+      req.user = decoded;
+      next();
+    });
+  }
+};
+
 app.get("/logout", (req, res) => {
   res
     .clearCookie("token", {
@@ -121,8 +138,13 @@ app.patch("/myrecqueries/:id", async (req, res) => {
   res.send(result);
 });
 
-app.get("/myqueries/:email", async (req, res) => {
+app.get("/myqueries/:email", verifytoken, async (req, res) => {
+  const tokenEmail = req.user.email;
   const email = req.params.email;
+
+  if (tokenEmail !== email) {
+    return res.status(403).send({ message: "forbiden access" });
+  }
   const query = { "userInfo.email": email };
   const result = await QueriesCollection.find(query).toArray();
   res.json(result);
@@ -143,15 +165,24 @@ app.get("/recommendations", async (req, res) => {
   res.json(result);
 });
 
-app.get("/myrecommendations/:email", async (req, res) => {
+app.get("/myrecommendations/:email", verifytoken, async (req, res) => {
+  const tokenEmail = req.user.email;
   const email = req.params.email;
+  if (tokenEmail !== email) {
+    return res.status(403).send({ message: "forbiden access" });
+  }
   const query = { recommenderEmail: email };
   const result = await recommendationCollection.find(query).toArray();
   res.send(result);
 });
 
-app.get("/recommendationme/:email", async (req, res) => {
+app.get("/recommendationme/:email", verifytoken, async (req, res) => {
+  const tokenEmail = req.user.email;
   const email = req.params.email;
+  if (tokenEmail !== email) {
+    return res.status(403).send({ message: "forbiden access" });
+  }
+
   const query = { UserEmail: email };
   const result = await recommendationCollection.find(query).toArray();
   res.send(result);
