@@ -6,12 +6,17 @@ require("dotenv").config();
 const PORT = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const cookieParser = require("cookie-parser");
-
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 app.use(express.json());
 app.use(cookieParser());
 
 const corsOptions = {
-  origin: ["http://localhost:5173", "http://localhost:5174"],
+  origin: [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "https://product-7b5e7.firebaseapp.com",
+    "https://product-7b5e7.web.app",
+  ],
   credentials: true,
 };
 app.use(cors(corsOptions));
@@ -40,20 +45,20 @@ dbConnect();
 const Database = client.db("rebbitDb");
 const QueriesCollection = Database.collection("queries");
 const recommendationCollection = Database.collection("recommendations");
+const paymentCollection = Database.collection("payments");
 
+const cookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production" ? true : false,
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+};
 app.post("/jwt", async (req, res) => {
   const user = req.body;
   const token = jwt.sign(user, process.env.jwt_web_token, { expiresIn: "1h" });
 
-  res
-    .cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
-    })
-    .send({
-      success: "true",
-    });
+  res.cookie("token", token, cookieOptions).send({
+    success: "true",
+  });
 });
 
 const verifytoken = (req, res, next) => {
@@ -73,12 +78,10 @@ const verifytoken = (req, res, next) => {
   }
 };
 
-app.get("/logout", (req, res) => {
+app.post("/logout", (req, res) => {
   res
     .clearCookie("token", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+      ...cookieOptions,
       maxAge: 0,
     })
     .send({
@@ -210,6 +213,31 @@ app.patch("/queiresdec/:id", async (req, res) => {
   };
   const result = await QueriesCollection.updateOne(query, updateDoc);
   res.send(result);
+});
+
+// payment intent
+app.post("/create-payment-intent", async (req, res) => {
+  const { price } = req.body;
+  const amount = parseInt(price * 100);
+
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: amount,
+    currency: "usd",
+    payment_method_types: ["card"],
+  });
+
+  res.send({
+    clientSecret: paymentIntent.client_secret,
+  });
+});
+
+app.post("/payments", async (req, res) => {
+  const payment = req.body;
+  const paymentResult = await paymentCollection.insertOne(payment);
+
+  //  carefully delete each item from the cart
+
+  res.send({ paymentResult });
 });
 
 app.get("/", (req, res) => {
